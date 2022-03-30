@@ -5,6 +5,7 @@ from brownie import (
     MockV3Aggregator,
     Contract,
     VRFCoordinatorMock,
+    LinkToken,
 )
 
 FORKED_LOCAL_ENVIRONMENTS = ["mainnet-fork-dev", "mainnet-fork"]
@@ -13,6 +14,7 @@ LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["development", "ganache_local"]
 contract_to_mock = {
     "eth_usd_price_feed": MockV3Aggregator,
     "vrf_coordinator": VRFCoordinatorMock,
+    "link_token": LinkToken,
 }
 
 
@@ -51,3 +53,5 @@ INITIAL_VALUE = 200000000
 def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
     account = get_account()
     MockV3Aggregator.deploy(decimals, initial_value, {"from": account})
+    lt = LinkToken.deploy({"from": account})
+    VRFCoordinatorMock.deploy(lt.address, {"from": account})
