@@ -9,6 +9,7 @@ contract Lottery is VRFConsumerBase, Ownable {
     address payable[] public players;
     uint256 public usdEntryFee;
     uint256 public mostRecentRandomNumber;
+    event RequestedRandomness(bytes32 requestId);
     AggregatorV3Interface internal ethUsdPriceFeed;
     enum LOTTERY_STATE {
         OPEN,
@@ -56,6 +57,7 @@ contract Lottery is VRFConsumerBase, Ownable {
     function endLottery() public onlyOwner {
         lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
         bytes32 requestId = requestRandomness(keyhash, fee);
+        emit RequestedRandomness(requestId);
     }
 
     function fulfillRandomness(bytes32 _requestId, uint256 _randomness)

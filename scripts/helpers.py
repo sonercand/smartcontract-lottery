@@ -23,11 +23,16 @@ def get_account(index=0, id=None):
         return accounts[index]
     if id:
         return accounts.load(id)
+    if (
+        network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS
+        or network.show_active() in FORKED_LOCAL_ENVIRONMENTS
+    ):
+        return accounts[0]
     return accounts.add(config["wallets"]["from_key"])
 
 
 def get_contract(contract_name):
-    """grabs the contract addressses from the brownie config if def, else deploys mock version
+    """grabs the contract addressses from the brownie config if dev, else deploys mock version
     args:
         contract_name(str)
     returns:
@@ -40,14 +45,12 @@ def get_contract(contract_name):
         contract = contract_type[-1]
     else:
         contract_address = config["networks"][network.show_active()][contract_name]
-        contract = Contract.from_abi(
-            contract_type.name, contract_address, contract_type.abi
-        )
+        contract = Contract.from_abi(contract_name, contract_address, contract_type.abi)
     return contract
 
 
 DECIMALS = 8
-INITIAL_VALUE = 200000000
+INITIAL_VALUE = 200000000000
 
 
 def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
@@ -55,3 +58,13 @@ def deploy_mocks(decimals=DECIMALS, initial_value=INITIAL_VALUE):
     MockV3Aggregator.deploy(decimals, initial_value, {"from": account})
     lt = LinkToken.deploy({"from": account})
     VRFCoordinatorMock.deploy(lt.address, {"from": account})
+
+
+def fund_with_link(
+    contract_address, account=None, link_token=None, amount=100000000000000000
+):
+    account = account if account else get_account()
+    link_token = link_token if link_token else get_contract("link_token")
+    tx = link_token.transfer(contract_address, amount, {"from": account})
+    tx.wait(1)
+    return tx
